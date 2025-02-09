@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 @OpenAPIDefinition(
 	info = @Info(
 		title = "Fletgram API",
-		version = "1.0",
+		version = "1.1",
 		description = "Api para rede social.",
 		contact = @Contact(name = "FletserW", email = "nicolas.s.borba1@gmail.com", url = "https://github.com/FletserW")
 	)
