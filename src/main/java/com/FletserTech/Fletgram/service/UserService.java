@@ -6,6 +6,8 @@ import com.FletserTech.Fletgram.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +34,12 @@ public class UserService {
         user.setBio(userDTO.getBio());
         return userRepository.save(user);
     }
+
+    public void updateUser(User user) {
+    user.setUpdatedAt(LocalDateTime.now());
+    userRepository.save(user);
+}
+
 
     public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;

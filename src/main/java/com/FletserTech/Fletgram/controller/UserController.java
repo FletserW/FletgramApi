@@ -10,6 +10,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +20,24 @@ import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.*;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -34,6 +46,7 @@ public class UserController {
 
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final String UPLOAD_DIR = "uploads/";
 
 
     @Value("${jwt.secret}") // Pegando a chave secreta do application.properties
@@ -58,12 +71,17 @@ public class UserController {
 
         try {
             User user = userService.createUser(userDTO);
-            return ResponseEntity.ok(user);
+            
+            // Retornando status 200 e o ID do usuário
+            return ResponseEntity.ok(Collections.singletonMap("id", user.getId()));
+
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar usuário: " + e.getMessage());
         }
     }
+
 
     @Operation(summary = "Busca um usuário pelo ID")
     @GetMapping("/{id}")
@@ -72,46 +90,124 @@ public class UserController {
     }
 
     @PostMapping("/login")
-@Operation(summary = "Rota responsável por autenticar um usuário com JWT")
-public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
-    logger.info("Iniciando processo de login para o email: {}", loginDTO.getEmail());
-    
-    // Verifica se o usuário existe
-    Optional<User> userOptional = userService.findByEmail(loginDTO.getEmail());
+    @Operation(summary = "Rota responsável por autenticar um usuário com JWT")
+    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
+        logger.info("Iniciando processo de login para o email: {}", loginDTO.getEmail());
 
-    if (userOptional.isPresent()) {
-        User user = userOptional.get();
-        
-        logger.info("Usuário encontrado: {}", user.getUsername());
+        // Verifica se o usuário existe
+        Optional<User> userOptional = userService.findByEmail(loginDTO.getEmail());
 
-        // Comparação direta da senha fornecida com a armazenada
-        if (loginDTO.getPassword().equals(user.getPasswordHash())) {
-            logger.info("Senha correta para o usuário: {}", user.getUsername());
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
 
-            // Geração do token JWT
-            try {
-                Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-                String token = Jwts.builder()
-                        .setSubject(user.getUsername())
-                        .setIssuedAt(new Date())
-                        .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Expira em 1 hora
-                        .signWith(key, SignatureAlgorithm.HS256)
-                        .compact();
+            logger.info("Usuário encontrado: {}", user.getUsername());
 
-                logger.info("Token gerado com sucesso para o usuário: {}", user.getUsername());
-                return ResponseEntity.ok(new TokenResponse(token));
-            } catch (Exception e) {
-                logger.error("Erro ao gerar o token JWT para o usuário: {}", user.getUsername(), e);
-                return ResponseEntity.status(500).body("Erro interno ao gerar token");
+            // Comparação direta da senha fornecida com a armazenada
+            if (loginDTO.getPassword().equals(user.getPasswordHash())) {
+                logger.info("Senha correta para o usuário: {}", user.getUsername());
+
+                // Geração do token JWT
+                try {
+                    Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+                    String token = Jwts.builder()
+                            .setSubject(user.getUsername())
+                            .setIssuedAt(new Date())
+                            .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Expira em 1 hora
+                            .signWith(key, SignatureAlgorithm.HS256)
+                            .compact();
+
+                    logger.info("Token gerado com sucesso para o usuário: {}", user.getUsername());
+
+                    // Criando a resposta com o token, username e id
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("token", token);
+                    response.put("username", user.getUsername()); // Enviar o nome de usuário real
+                    response.put("id", user.getId()); // Se quiser o ID também
+
+                    return ResponseEntity.ok(response); // Retorna a resposta com o token e dados do usuário
+                } catch (Exception e) {
+                    logger.error("Erro ao gerar o token JWT para o usuário: {}", user.getUsername(), e);
+                    return ResponseEntity.status(500).body("Erro interno ao gerar token");
+                }
+            } else {
+                logger.warn("Senha incorreta fornecida para o usuário: {}", loginDTO.getEmail());
+                return ResponseEntity.status(401).body("Senha incorreta");
             }
         } else {
-            logger.warn("Senha incorreta fornecida para o usuário: {}", loginDTO.getEmail());
-            return ResponseEntity.status(401).body("Senha incorreta");
+            logger.warn("Usuário não encontrado para o email: {}", loginDTO.getEmail());
+            return ResponseEntity.status(404).body("Usuário não encontrado");
         }
-    } else {
-        logger.warn("Usuário não encontrado para o email: {}", loginDTO.getEmail());
-        return ResponseEntity.status(404).body("Usuário não encontrado");
     }
+
+    @PostMapping("/{id}/uploadProfilePicture")
+public ResponseEntity<String> uploadProfilePicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+    try {
+        Optional<User> userOptional = userService.getUserById(id);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
+        }
+
+        User user = userOptional.get();
+
+        if (file.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Arquivo inválido!");
+        }
+
+        // Criar diretório se não existir
+        Files.createDirectories(Paths.get(UPLOAD_DIR));
+
+        // Gerar nome único para o arquivo
+        String fileName = id + "_" + file.getOriginalFilename();
+        String filePath = UPLOAD_DIR + fileName;
+
+        // Salvar o arquivo
+        Files.copy(file.getInputStream(), Paths.get(filePath), StandardCopyOption.REPLACE_EXISTING);
+
+        // Atualizar o caminho da imagem no banco de dados
+        user.setProfilePicture(fileName);
+        userService.updateUser(user);
+
+        return ResponseEntity.ok("Imagem salva com sucesso");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar a imagem.");
+    }
+}
+
+
+    @GetMapping("/uploads/{fileName:.+}")
+    public ResponseEntity<Resource> serveFile(@PathVariable String fileName) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/{id}/profilePicture")
+public ResponseEntity<Map<String, String>> getProfilePicture(@PathVariable Long id) {
+    Optional<User> userOptional = userService.getUserById(id);
+    if (userOptional.isEmpty() || userOptional.get().getProfilePicture() == null) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+
+    User user = userOptional.get();
+    String imageUrl = "http://192.168.0.7:8082/uploads/" + user.getProfilePicture(); // URL completa
+
+    System.out.println("Imagem retornada: " + imageUrl); // Debug
+
+    Map<String, String> response = new HashMap<>();
+    response.put("profile_picture", imageUrl);
+
+    return ResponseEntity.ok(response);
 }
 
 
