@@ -4,7 +4,6 @@ import com.FletserTech.Fletgram.dto.UserDTO;
 import com.FletserTech.Fletgram.model.User;
 import com.FletserTech.Fletgram.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.FletserTech.Fletgram.dto.LoginDTO;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.List;

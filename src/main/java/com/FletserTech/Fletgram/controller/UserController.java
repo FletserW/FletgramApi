@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -30,6 +33,8 @@ import java.util.Optional;
 public class UserController {
 
     private final UserService userService;
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
 
     @Value("${jwt.secret}") // Pegando a chave secreta do application.properties
     private String secretKey;
@@ -67,32 +72,48 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Rota responsável por autenticar um usuário com JWT")
-    public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
-        Optional<User> userOptional = userService.findByEmail(loginDTO.getEmail());
+@Operation(summary = "Rota responsável por autenticar um usuário com JWT")
+public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
+    logger.info("Iniciando processo de login para o email: {}", loginDTO.getEmail());
+    
+    // Verifica se o usuário existe
+    Optional<User> userOptional = userService.findByEmail(loginDTO.getEmail());
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
+    if (userOptional.isPresent()) {
+        User user = userOptional.get();
+        
+        logger.info("Usuário encontrado: {}", user.getUsername());
 
-            if (BCrypt.checkpw(loginDTO.getPassword(), user.getPasswordHash())) {
-                // Geração do token JWT
+        // Comparação direta da senha fornecida com a armazenada
+        if (loginDTO.getPassword().equals(user.getPasswordHash())) {
+            logger.info("Senha correta para o usuário: {}", user.getUsername());
+
+            // Geração do token JWT
+            try {
                 Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-
                 String token = Jwts.builder()
-                        .setSubject(user.getUsername()) // Informações do usuário no token
-                        .setIssuedAt(new Date()) // Data de emissão
-                        .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Token expira em 1 hora
-                        .signWith(key, SignatureAlgorithm.HS256) // Assinatura segura
+                        .setSubject(user.getUsername())
+                        .setIssuedAt(new Date())
+                        .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // Expira em 1 hora
+                        .signWith(key, SignatureAlgorithm.HS256)
                         .compact();
 
+                logger.info("Token gerado com sucesso para o usuário: {}", user.getUsername());
                 return ResponseEntity.ok(new TokenResponse(token));
-            } else {
-                return ResponseEntity.status(401).body("Senha incorreta");
+            } catch (Exception e) {
+                logger.error("Erro ao gerar o token JWT para o usuário: {}", user.getUsername(), e);
+                return ResponseEntity.status(500).body("Erro interno ao gerar token");
             }
         } else {
-            return ResponseEntity.status(404).body("Usuário não encontrado");
+            logger.warn("Senha incorreta fornecida para o usuário: {}", loginDTO.getEmail());
+            return ResponseEntity.status(401).body("Senha incorreta");
         }
+    } else {
+        logger.warn("Usuário não encontrado para o email: {}", loginDTO.getEmail());
+        return ResponseEntity.status(404).body("Usuário não encontrado");
     }
+}
+
 
     @Operation(summary = "Deleta um usuário pelo ID")
     @DeleteMapping("/{id}")
