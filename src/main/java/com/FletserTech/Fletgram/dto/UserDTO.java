@@ -4,8 +4,12 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 @Data
+@Getter
+@Setter
 public class UserDTO {
     
     private String fullName;
@@ -23,4 +27,9 @@ public class UserDTO {
     private String password;
 
     private String bio;
+
+    
+    private String pronouns;  
+    private String gender;    
+    private String links;     
 }

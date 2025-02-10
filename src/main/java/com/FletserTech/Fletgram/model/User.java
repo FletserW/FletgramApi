@@ -31,6 +31,8 @@ public class User {
     private String profilePicture;
     private String bio;
     private String gender;
+    private String pronouns;    
+    private String links; 
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();

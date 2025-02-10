@@ -4,6 +4,7 @@ import com.FletserTech.Fletgram.dto.UserDTO;
 import com.FletserTech.Fletgram.model.User;
 import com.FletserTech.Fletgram.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,10 +36,32 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void updateUser(User user) {
-    user.setUpdatedAt(LocalDateTime.now());
-    userRepository.save(user);
-}
+    public User updateUser(Long id, UserDTO userDTO) {
+        // Buscar o usuário existente pelo ID
+        Optional<User> optionalUser = userRepository.findById(id);
+        
+        if (!optionalUser.isPresent()) {
+            return null;  // Caso o usuário não seja encontrado
+        }
+
+        User user = optionalUser.get();
+
+        // Atualizando os dados do usuário
+        if (userDTO.getFullName() != null) user.setFullName(userDTO.getFullName());
+        if (userDTO.getUsername() != null) user.setUsername(userDTO.getUsername());
+        if (userDTO.getEmail() != null) user.setEmail(userDTO.getEmail());
+        if (userDTO.getPhone() != null) user.setPhone(userDTO.getPhone());
+        if (userDTO.getPassword() != null) user.setPasswordHash(BCrypt.hashpw(userDTO.getPassword(), BCrypt.gensalt())); // Se for necessário atualizar a senha
+        
+        // Atualizando os novos campos (bio, pronomes, gênero e links)
+        if (userDTO.getBio() != null) user.setBio(userDTO.getBio());
+        if (userDTO.getPronouns() != null) user.setPronouns(userDTO.getPronouns());
+        if (userDTO.getGender() != null) user.setGender(userDTO.getGender());
+        if (userDTO.getLinks() != null) user.setLinks(userDTO.getLinks());
+        user.setUpdatedAt(LocalDateTime.now());
+        // Salvando as alterações no banco de dados
+        return userRepository.save(user);
+    }
 
 
     public UserService(UserRepository userRepository) {
