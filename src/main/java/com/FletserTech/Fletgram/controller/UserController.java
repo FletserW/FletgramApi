@@ -181,35 +181,52 @@ public class UserController {
     }
 
     @PostMapping("/{id}/uploadProfilePicture")
-    public ResponseEntity<Map<String, String>> uploadProfilePicture(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
-        try {
-            Optional<User> userOptional = userService.getUserById(id);
-            if (userOptional.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuário não encontrado"));
-            }
-
-            User user = userOptional.get();
-
-            if (file.isEmpty() || !file.getContentType().startsWith("image")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Arquivo inválido!"));
-            }
-
-            Files.createDirectories(Paths.get(UPLOAD_DIR));
-            String fileName = "profile_" + id + "_" + System.currentTimeMillis() + ".jpg";
-            Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName);
-            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-            user.setProfilePicture(fileName);
-            userService.updateUserProfilePicture(id, fileName);
-
-            String imageUrl = "http://192.168.0.7:8082/uploads/" + fileName;
-            return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro ao salvar a imagem"));
+public ResponseEntity<Map<String, String>> uploadProfilePicture(
+        @PathVariable Long id,
+        @RequestParam("file") MultipartFile file) {
+    try {
+        Optional<User> userOptional = userService.getUserById(id);
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuário não encontrado"));
         }
+
+        User user = userOptional.get();
+
+        if (file.isEmpty() || !file.getContentType().startsWith("image")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Arquivo inválido!"));
+        }
+
+        Files.createDirectories(Paths.get(UPLOAD_DIR));
+        
+        // Verifica se o usuário já possui uma imagem
+        String existingFileName = user.getProfilePicture();
+        String fileName;
+
+        if (existingFileName != null) {
+            // Se já tiver uma imagem, usa o nome da imagem atual
+            fileName = existingFileName;
+        } else {
+            // Caso contrário, gera um novo nome
+            fileName = "profile_" + id + "_" + System.currentTimeMillis() + ".jpg";
+        }
+
+        // Define o caminho do arquivo
+        Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName);
+
+        // Substitui o arquivo existente (se houver) ou cria um novo
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Atualiza o nome da imagem do usuário no banco de dados
+        user.setProfilePicture(fileName);
+        userService.updateUserProfilePicture(id, fileName);
+
+        String imageUrl = "http://192.168.0.7:8082/uploads/" + fileName;
+        return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro ao salvar a imagem"));
     }
+}
+
 
     @GetMapping("/uploads/{fileName:.+}")
     public ResponseEntity<Resource> serveFile(@PathVariable String fileName) {
