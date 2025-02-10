@@ -23,7 +23,7 @@ public class UserDTO {
 
     private String phone;
 
-    @NotBlank(message = "Senha é obrigatória")
+    
     private String password;
 
     private String bio;

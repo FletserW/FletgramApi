@@ -39,6 +39,22 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.nio.file.*;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("/users")
@@ -47,7 +63,7 @@ public class UserController {
     private final UserService userService;
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private static final String UPLOAD_DIR = "uploads/";
-
+    
 
     @Value("${jwt.secret}") // Pegando a chave secreta do application.properties
     private String secretKey;
@@ -164,87 +180,66 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "Atualiza a foto de perfil do usuário")
-@PostMapping("/{id}/uploadProfilePicture")
-public ResponseEntity<String> uploadProfilePicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
-    try {
-        Optional<User> userOptional = userService.getUserById(id);  // Buscar o usuário pelo ID
-        if (userOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuário não encontrado");
+    @PostMapping("/{id}/uploadProfilePicture")
+    public ResponseEntity<Map<String, String>> uploadProfilePicture(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            Optional<User> userOptional = userService.getUserById(id);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuário não encontrado"));
+            }
+
+            User user = userOptional.get();
+
+            if (file.isEmpty() || !file.getContentType().startsWith("image")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Arquivo inválido!"));
+            }
+
+            Files.createDirectories(Paths.get(UPLOAD_DIR));
+            String fileName = "profile_" + id + "_" + System.currentTimeMillis() + ".jpg";
+            Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            user.setProfilePicture(fileName);
+            userService.updateUserProfilePicture(id, fileName);
+
+            String imageUrl = "http://192.168.0.7:8082/uploads/" + fileName;
+            return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro ao salvar a imagem"));
+        }
+    }
+
+    @GetMapping("/uploads/{fileName:.+}")
+    public ResponseEntity<Resource> serveFile(@PathVariable String fileName) {
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/{id}/profilePicture")
+    public ResponseEntity<Map<String, String>> getProfilePicture(@PathVariable Long id) {
+        Optional<User> userOptional = userService.getUserById(id);
+        if (userOptional.isEmpty() || userOptional.get().getProfilePicture() == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         User user = userOptional.get();
-
-        // Verifica se o arquivo foi enviado
-        if (file.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Arquivo inválido!");
-        }
-
-        // Criar diretório para armazenar imagens se não existir
-        Files.createDirectories(Paths.get(UPLOAD_DIR));
-
-        // Gerar nome único para o arquivo (evitar conflito de nomes)
-        String fileName = id + "_" + file.getOriginalFilename();
-        String filePath = UPLOAD_DIR + fileName;
-
-        // Salvar o arquivo no sistema de arquivos
-        Files.copy(file.getInputStream(), Paths.get(filePath), StandardCopyOption.REPLACE_EXISTING);
-
-        // Atualizar o caminho da imagem de perfil do usuário
-        user.setProfilePicture(fileName);  // Salvar o nome do arquivo no banco
-        userService.updateUser(id, null);  // Atualiza os dados do usuário no banco de dados (não mudamos o DTO, então passamos null)
-
-        return ResponseEntity.ok("Imagem de perfil salva com sucesso!");
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao salvar a imagem.");
+        String imageUrl = "http://192.168.0.7:8082/uploads/" + user.getProfilePicture();
+        return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
     }
-}
-
-
-
-@CrossOrigin(origins = "*")
-@GetMapping("/uploads/{fileName:.+}")
-public ResponseEntity<Resource> serveFile(@PathVariable String fileName) {
-    try {
-        Path filePath = Paths.get(UPLOAD_DIR).resolve(fileName).normalize();
-        System.out.println("Tentando buscar imagem em: " + filePath.toString()); // Debug
-
-        Resource resource = new UrlResource(filePath.toUri());
-
-        if (resource.exists() || resource.isReadable()) {
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_TYPE, Files.probeContentType(filePath))
-                    .body(resource);
-        } else {
-            System.out.println("Imagem não encontrada: " + filePath.toString()); // Debug
-            return ResponseEntity.notFound().build();
-        }
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    }
-}
-
-
-    @GetMapping("/{id}/profilePicture")
-public ResponseEntity<Map<String, String>> getProfilePicture(@PathVariable Long id) {
-    Optional<User> userOptional = userService.getUserById(id);
-    if (userOptional.isEmpty() || userOptional.get().getProfilePicture() == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
-
-    User user = userOptional.get();
-    String imageUrl = "http://192.168.0.7:8082/uploads/" + user.getProfilePicture(); // URL completa
-
-    System.out.println("Imagem retornada: " + imageUrl); // Debug
-
-    Map<String, String> response = new HashMap<>();
-    response.put("profile_picture", imageUrl);
-
-    return ResponseEntity.ok(response);
-}
-
 
     @Operation(summary = "Deleta um usuário pelo ID")
     @DeleteMapping("/{id}")

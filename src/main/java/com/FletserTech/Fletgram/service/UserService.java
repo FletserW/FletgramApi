@@ -59,13 +59,18 @@ public class UserService {
         if (userDTO.getGender() != null) user.setGender(userDTO.getGender());
         if (userDTO.getLinks() != null) user.setLinks(userDTO.getLinks());
         user.setUpdatedAt(LocalDateTime.now());
+        
         // Salvando as alterações no banco de dados
         return userRepository.save(user);
     }
 
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public void updateUserProfilePicture(Long id, String fileName) {
+        Optional<User> userOptional = userRepository.findById(id); // Agora usa userRepository
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setProfilePicture(fileName);
+            userRepository.save(user); // Salvando o usuário atualizado
+        }
     }
 
     public Optional<User> findByEmail(String email) {
