@@ -47,6 +47,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -220,7 +221,7 @@ public ResponseEntity<Map<String, String>> uploadProfilePicture(
         user.setProfilePicture(fileName);
         userService.updateUserProfilePicture(id, fileName);
 
-        String imageUrl = "http://192.168.0.7:8082/uploads/" + fileName;
+        String imageUrl = "http://192.168.0.5:8082/uploads/" + fileName;
         return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
     } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro ao salvar a imagem"));
@@ -254,7 +255,7 @@ public ResponseEntity<Map<String, String>> uploadProfilePicture(
         }
 
         User user = userOptional.get();
-        String imageUrl = "http://192.168.0.7:8082/uploads/" + user.getProfilePicture();
+        String imageUrl = "http://192.168.0.5:8082/uploads/" + user.getProfilePicture();
         return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
     }
 

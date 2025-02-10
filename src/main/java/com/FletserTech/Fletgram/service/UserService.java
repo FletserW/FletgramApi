@@ -8,6 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 //import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,7 @@ public class UserService {
         //user.setPasswordHash(passwordEncoder.encode(userDTO.getPassword()));
         user.setPasswordHash(userDTO.getPassword());
         user.setBio(userDTO.getBio());
+        user.setDate_of_birth(userDTO.getDate_of_birth());
         return userRepository.save(user);
     }
 
@@ -55,6 +57,7 @@ public class UserService {
         
         // Atualizando os novos campos (bio, pronomes, gênero e links)
         if (userDTO.getBio() != null) user.setBio(userDTO.getBio());
+        if (userDTO.getDate_of_birth() != null) user.setDate_of_birth(userDTO.getDate_of_birth());
         if (userDTO.getPronouns() != null) user.setPronouns(userDTO.getPronouns());
         if (userDTO.getGender() != null) user.setGender(userDTO.getGender());
         if (userDTO.getLinks() != null) user.setLinks(userDTO.getLinks());

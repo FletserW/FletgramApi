@@ -14,7 +14,6 @@ public class UserDTO {
     
     private String fullName;
 
-    @NotBlank(message = "Nome de usuário é obrigatório")
     @Size(min = 3, max = 50)
     private String username;
 
@@ -27,6 +26,8 @@ public class UserDTO {
     private String password;
 
     private String bio;
+
+    private String date_of_birth;
 
     
     private String pronouns;  

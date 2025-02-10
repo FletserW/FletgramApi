@@ -30,6 +30,7 @@ public class User {
 
     private String profilePicture;
     private String bio;
+    private String date_of_birth;
     private String gender;
     private String pronouns;    
     private String links; 
