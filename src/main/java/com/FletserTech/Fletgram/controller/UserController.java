@@ -131,6 +131,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
+    
     @PostMapping("/login")
     @Operation(summary = "Rota responsável por autenticar um usuário com JWT")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
@@ -181,8 +182,9 @@ public class UserController {
         }
     }
 
+    
     @PostMapping("/{id}/uploadProfilePicture")
-public ResponseEntity<Map<String, String>> uploadProfilePicture(
+    public ResponseEntity<Map<String, String>> uploadProfilePicture(
         @PathVariable Long id,
         @RequestParam("file") MultipartFile file) {
     try {
