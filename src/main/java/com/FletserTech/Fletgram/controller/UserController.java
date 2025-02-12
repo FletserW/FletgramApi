@@ -223,7 +223,7 @@ public class UserController {
         user.setProfilePicture(fileName);
         userService.updateUserProfilePicture(id, fileName);
 
-        String imageUrl = "http://192.168.0.5:8082/uploads/" + fileName;
+        String imageUrl = "https://fletgram.loca.lt/uploads/" + fileName;
         return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
     } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro ao salvar a imagem"));
@@ -257,7 +257,7 @@ public class UserController {
         }
 
         User user = userOptional.get();
-        String imageUrl = "http://192.168.0.5:8082/uploads/" + user.getProfilePicture();
+        String imageUrl = "https://fletgram.loca.lt/uploads/" + user.getProfilePicture();
         return ResponseEntity.ok(Map.of("profile_picture", imageUrl));
     }
 
