@@ -59,7 +59,7 @@ public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") Mult
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
         // Construir a URL completa baseada no servidor local
-        String baseUrl = "https://fletgram.loca.lt";
+        String baseUrl = "https://electric-polished-perch.ngrok-free.app";
         String content = baseUrl + "/uploads/" + fileName;
 
         Map<String, String> response = new HashMap<>();

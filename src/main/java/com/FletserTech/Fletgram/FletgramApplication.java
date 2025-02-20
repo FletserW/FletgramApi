@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.info.Info;
 	)
 )
 public class FletgramApplication {
-
+	
 	public static void main(String[] args) {
 		SpringApplication.run(FletgramApplication.class, args);
 	}
