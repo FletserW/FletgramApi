@@ -29,7 +29,7 @@ public class UserDTO {
 
     private String date_of_birth;
 
-    
+    private String profilePicture;
     private String pronouns;  
     private String gender;    
     private String links;     

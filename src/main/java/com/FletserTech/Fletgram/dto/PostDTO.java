@@ -1,5 +1,6 @@
 package com.FletserTech.Fletgram.dto;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +14,7 @@ import lombok.Setter;
 public class PostDTO {
     private Long id;
     private Long userId;
-    private String content;
+    private List<String> image_url;
     private LocalDateTime createdAt;
     
     

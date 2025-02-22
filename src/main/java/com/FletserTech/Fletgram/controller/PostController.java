@@ -4,7 +4,9 @@ import com.FletserTech.Fletgram.dto.PostDTO;
 import com.FletserTech.Fletgram.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -16,11 +18,12 @@ public class PostController {
     @Autowired
     private PostService postService;
 
-    @PostMapping("/create")
-public PostDTO createPost(@RequestParam Long userId, @RequestParam String content) {
-    return postService.createPost(userId, content);
-}
-
+    @PostMapping("/") 
+    public PostDTO createPost(
+        @RequestParam("userId") Long userId,
+        @RequestParam("files") MultipartFile[] files) { 
+        return postService.createPost(userId, files);
+    }
 
     @GetMapping("/user/{userId}")
     public List<PostDTO> getUserPosts(@PathVariable Long userId) {
