@@ -71,11 +71,11 @@ public class UserService {
         Optional<User> userOptional = userRepository.findById(id); // Agora usa userRepository
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setProfilePicture(fileName);
-            userRepository.save(user); // Salvando o usuário atualizado
+            user.setProfilePicture(fileName);  // Atualiza o campo profilePicture com o nome do novo arquivo
+            userRepository.save(user); // Salva o usuário atualizado no banco de dados
         }
     }
-
+    
     public Optional<User> findByEmail(String email) {
         System.out.println("Email recebido no login: " + email);
         return userRepository.findByEmail(email);

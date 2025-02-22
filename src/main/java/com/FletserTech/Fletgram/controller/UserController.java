@@ -184,9 +184,9 @@ public class UserController {
 
     
     @PostMapping("/{id}/uploadProfilePicture")
-    public ResponseEntity<Map<String, String>> uploadProfilePicture(
-        @PathVariable Long id,
-        @RequestParam("file") MultipartFile file) {
+public ResponseEntity<Map<String, String>> uploadProfilePicture(
+    @PathVariable Long id,
+    @RequestParam("file") MultipartFile file) {
     try {
         Optional<User> userOptional = userService.getUserById(id);
         if (userOptional.isEmpty()) {
@@ -229,6 +229,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Erro ao salvar a imagem"));
     }
 }
+
 
 
     @GetMapping("/uploads/{fileName:.+}")
