@@ -77,28 +77,28 @@ CREATE TABLE conversations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de participantes das conversas
-CREATE TABLE conversation_participants (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (conversation_id, user_id)  -- Impede duplicação de participantes
-);
-
--- Tabela de mensagens dentro das conversas
-CREATE TABLE messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,  -- Usando AUTO_INCREMENT em vez de SERIAL
-    conversation_id INT NOT NULL,
-    sender_id INT NOT NULL,
-    message_text TEXT,                  -- Texto da mensagem (NULL se for apenas mídia)
-    media_url VARCHAR(255),             -- URL de imagem ou vídeo (NULL se for apenas texto)
-    media_type VARCHAR(50) DEFAULT 'none', -- Definindo o valor padrão diretamente sem o CHECK
-    edited BOOLEAN DEFAULT FALSE,       -- Indica se a mensagem foi editada
-    deleted BOOLEAN DEFAULT FALSE,      -- Indica se a mensagem foi apagada
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- Tabela de participantes das conversas
+    CREATE TABLE conversation_participants (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        conversation_id INT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (conversation_id, user_id)  -- Impede duplicação de participantes
     );
+
+    -- Tabela de mensagens dentro das conversas
+    CREATE TABLE messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,  -- Usando AUTO_INCREMENT em vez de SERIAL
+        conversation_id INT NOT NULL,
+        sender_id INT NOT NULL,
+        message_text TEXT,                  -- Texto da mensagem (NULL se for apenas mídia)
+        media_url VARCHAR(255),             -- URL de imagem ou vídeo (NULL se for apenas texto)
+        media_type VARCHAR(50) DEFAULT 'none', -- Definindo o valor padrão diretamente sem o CHECK
+        edited BOOLEAN DEFAULT FALSE,       -- Indica se a mensagem foi editada
+        deleted BOOLEAN DEFAULT FALSE,      -- Indica se a mensagem foi apagada
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        );
 
 -- Tabela para reações às mensagens
 CREATE TABLE message_reactions (
