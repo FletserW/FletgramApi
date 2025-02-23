@@ -59,21 +59,25 @@ public class ConversationService {
 
     // Método para buscar todas as conversas de um usuário
     public List<Conversation> getConversationsForUser(Long userId) {
-        // Busca todos os participantes de conversas com base no userId
-        List<ConversationParticipant> participants = conversationParticipantRepository.findByUserId(userId);
+        List<Conversation> conversations = conversationRepository.findByUserId(userId);
         
-        // Extrair as conversas dos participantes encontrados
-        List<Conversation> conversations = participants.stream()
-                .map(ConversationParticipant::getConversation)
-                .distinct()
-                .collect(Collectors.toList());
-
-        // Preenche o número de participantes de cada conversa
         for (Conversation conversation : conversations) {
-            int participantCount = (int) conversationParticipantRepository.countByConversationId(conversation.getId());
-            conversation.setParticipantCount(participantCount);
+            if (!conversation.isGroup()) {
+                // Encontrar o outro participante (que não é o usuário atual)
+                Optional<ConversationParticipant> participant = conversationParticipantRepository
+                        .findByConversationIdAndUserIdNot(conversation.getId(), userId);
+                
+                // Se encontramos o outro participante, definimos o nome da conversa com o username dele
+                if (participant.isPresent()) {
+                    User otherUser = participant.get().getUser();
+                    conversation.setName(otherUser.getUsername());  // Atualizando o nome da conversa
+                }
+            }
         }
-
+    
         return conversations;
     }
-}
+
+    
+}    
+    

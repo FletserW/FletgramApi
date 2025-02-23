@@ -3,6 +3,7 @@ package com.FletserTech.Fletgram.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,6 +15,7 @@ import com.FletserTech.Fletgram.model.Conversation;
 import com.FletserTech.Fletgram.service.ConversationService;  // Import the service
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/conversations")
 public class ConversationController {
     

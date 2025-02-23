@@ -16,6 +16,7 @@ import java.nio.file.*;
 import java.util.Map;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/messages")
 public class MessageController {
     private final MessageService messageService;

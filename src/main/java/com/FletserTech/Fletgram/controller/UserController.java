@@ -268,4 +268,13 @@ public ResponseEntity<Map<String, String>> uploadProfilePicture(
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Busca o ID de um usuário pelo Username")
+@GetMapping("/username/{username}/id")
+public ResponseEntity<Map<String, Long>> getUserIdByUsername(@PathVariable String username) {
+    Optional<User> userOptional = userService.findByUsername(username);
+
+    User user = userOptional.get();
+    return ResponseEntity.ok(Map.of("id", user.getId()));
+}
 }
