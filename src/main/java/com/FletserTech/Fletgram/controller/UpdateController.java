@@ -16,7 +16,7 @@ public class UpdateController {
     public ResponseEntity<Map<String, String>> getLatestVersion() {
         Map<String, String> response = new HashMap<>();
         response.put("version", "1.0.5"); // Número da versão atual
-        response.put("url", "electric-polished-perch.ngrok-free.app/static/apk/fletgram_1.1.0.apk"); // Link do APK
+        response.put("url", "https://fletgram.loca.lt/static/apk/fletgram_1.1.0.apk"); // Link do APK
         return ResponseEntity.ok(response);
     }
 }

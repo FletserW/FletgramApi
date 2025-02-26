@@ -5,6 +5,9 @@ import com.FletserTech.Fletgram.model.Conversation;
 import com.FletserTech.Fletgram.model.Message;
 import com.FletserTech.Fletgram.model.User;
 import com.FletserTech.Fletgram.service.MessageService;
+
+import io.swagger.v3.oas.annotations.Operation;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,11 +28,13 @@ public class MessageController {
         this.messageService = messageService;
     }
 
+   @Operation(summary = "Obter mensagens de uma conversa", description = "Retorna a lista de mensagens para a conversa especificada pelo ID.")
     @GetMapping("/conversation/{conversationId}")
     public ResponseEntity<List<Message>> getMessages(@PathVariable Long conversationId) {
         return ResponseEntity.ok(messageService.getMessagesByConversation(conversationId));
     }
 
+    @Operation(summary = "Enviar uma mensagem", description = "Envia uma nova mensagem para a conversa especificada, com dados do remetente, texto e mídia.")
     @PostMapping("/")
     public ResponseEntity<Message> sendMessage(@RequestBody MessageDTO messageDTO) {
         Message message = new Message();
@@ -47,7 +52,7 @@ public class MessageController {
         return ResponseEntity.ok(messageService.saveMessage(messageDTO));
     }
 
-
+    @Operation(summary = "Fazer upload de mídia", description = "Faz o upload de um arquivo de mídia e retorna a URL acessível para o arquivo.")
     @PostMapping("/upload")
     public ResponseEntity<Map<String, String>> uploadMedia(@RequestParam("file") MultipartFile file) {
         try {
@@ -60,7 +65,7 @@ public class MessageController {
             Path filePath = uploadDir.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-            String baseUrl = "https://electric-polished-perch.ngrok-free.app";
+            String baseUrl = "https://fletgram.loca.lt";
             String content = baseUrl + "/midia/" + fileName;
 
             Map<String, String> response = new HashMap<>();
